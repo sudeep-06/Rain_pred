@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RainPredict | Explainable ML Pipeline</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#d4e4fa",
+                        "tertiary-fixed": "#62fae3",
+                        "inverse-on-surface": "#233143",
+                        "on-primary-fixed": "#131b2e",
+                        "error-container": "#93000a",
+                        "primary-container": "#0f172a",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-secondary": "#263143",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "secondary": "#bcc7de",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "outline-variant": "#45464d",
+                        "surface-variant": "#273647",
+                        "on-tertiary-fixed": "#00201c",
+                        "primary-fixed": "#dae2fd",
+                        "surface-container-high": "#1c2b3c",
+                        "surface-container": "#122131",
+                        "outline": "#909097",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-container": "#001c18",
+                        "on-error": "#690005",
+                        "on-primary-container": "#798098",
+                        "surface-container-low": "#0d1c2d",
+                        "error": "#ffb4ab",
+                        "surface-bright": "#2c3a4c",
+                        "surface-container-highest": "#273647",
+                        "surface-dim": "#051424",
+                        "background": "#051424",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-surface-variant": "#c6c6cd",
+                        "on-tertiary-container": "#009182",
+                        "surface-tint": "#bec6e0",
+                        "secondary-fixed": "#d8e3fb",
+                        "secondary-container": "#3e495d",
+                        "on-primary": "#283044",
+                        "surface-container-lowest": "#010f1f",
+                        "tertiary": "#3cddc7",
+                        "tertiary-fixed-dim": "#3cddc7",
+                        "inverse-primary": "#565e74",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-tertiary-fixed-variant": "#005047",
+                        "surface": "#051424",
+                        "primary": "#bec6e0",
+                        "inverse-surface": "#d4e4fa",
+                        "on-tertiary": "#003731",
+                        "on-background": "#d4e4fa"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1.5rem",
+                        "stack-md": "1rem",
+                        "stack-lg": "2rem",
+                        "unit": "8px",
+                        "stack-sm": "0.5rem",
+                        "container-padding-desktop": "3rem",
+                        "container-padding-mobile": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #051424;
+            overflow: hidden;
+            color: #d4e4fa;
+        }
+
+        .glass {
+            background: rgba(18, 33, 49, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .aurora {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(60, 221, 199, 0.05) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 70%, rgba(190, 198, 224, 0.05) 0%, transparent 40%);
+            z-index: -1;
+            filter: blur(80px);
+            animation: aurora-drift 20s infinite alternate ease-in-out;
+        }
+
+        @keyframes aurora-drift {
+            from { transform: translate(-5%, -5%) rotate(0deg); }
+            to { transform: translate(5%, 5%) rotate(5deg); }
+        }
+
+        .gauge-ring {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 144; /* 49% of 283 is approx 144 offset */
+            transition: stroke-dashoffset 2s ease-out;
+            filter: drop-shadow(0 0 8px rgba(255, 179, 0, 0.6));
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            background-size: 200% 100%;
+            animation: shimmer-anim 3s infinite linear;
+        }
+
+        @keyframes shimmer-anim {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #3cddc7;
+            margin-top: -4px;
+            box-shadow: 0 0 10px rgba(60, 221, 199, 0.8);
+            cursor: pointer;
+        }
+
+        canvas#rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-hidden">
+<canvas id="rain"></canvas>
+<div class="aurora"></div>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 flex flex-col p-gutter bg-surface-container/60 dark:bg-surface-container/60 backdrop-blur-xl border-r border-white/10 shadow-2xl z-50">
+<div class="flex flex-col gap-2 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-tertiary/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-headline-md" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-on-surface">RainPredict v1.4</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-70">Explainable ML Pipeline</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-tertiary font-bold bg-tertiary/10 rounded-lg shadow-[0_0_15px_rgba(60,221,199,0.2)] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">cloud</span>
+<span class="font-label-md text-label-md">Atmosphere</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">umbrella</span>
+<span class="font-label-md text-label-md">Precipitation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">satellite_alt</span>
+<span class="font-label-md text-label-md">Satellite</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">History</span>
+</a>
+</nav>
+<div class="mt-auto space-y-4">
+<div class="p-4 rounded-xl bg-surface-container-highest/30 border border-white/5">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-tertiary">Forecast Up to Date</span>
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+</div>
+<div class="text-[10px] text-on-surface-variant/60 font-label-sm leading-tight">Next ingestion in 4m 12s</div>
+</div>
+<div class="pt-4 border-t border-white/10 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span class="font-label-sm text-label-sm">API Console</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 flex items-center justify-between px-gutter bg-surface/40 backdrop-blur-md border-b border-white/5 z-40">
+<div class="flex items-center gap-8">
+<h2 class="font-display-lg text-[20px] font-bold text-on-surface tracking-tight">RainPredict</h2>
+<nav class="flex gap-6">
+<a class="font-label-md text-label-md text-tertiary border-b-2 border-tertiary pb-1" href="#">Analysis</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Models</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Global Map</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container-lowest/50 border border-white/10 rounded-full py-1.5 pl-9 pr-4 text-label-sm font-label-sm focus:outline-none focus:ring-1 focus:ring-tertiary/50 w-64 transition-all duration-300" placeholder="Search region..." type="text"/>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-tertiary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-gradient-to-br from-tertiary to-primary flex items-center justify-center text-on-primary font-bold text-[12px] cursor-pointer">
+                JD
+            </div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="fixed inset-0 left-64 top-16 bottom-12 overflow-y-auto p-gutter z-10 custom-scrollbar">
+<div class="grid grid-cols-12 gap-gutter max-w-[1600px] mx-auto">
+<!-- Left Panel: Features -->
+<div class="col-span-12 lg:col-span-3">
+<div class="glass p-6 rounded-2xl flex flex-col gap-6 h-full">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-[18px] text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary">analytics</span>
+                            Meteorological Features
+                        </h3>
+<button class="text-label-sm font-label-sm text-tertiary/60 hover:text-tertiary transition-colors uppercase tracking-widest">Reset</button>
+</div>
+<p class="text-on-surface-variant/60 text-label-sm font-label-sm leading-relaxed mb-2">
+                        Adjust parameters to simulate regional micro-climates and model response.
+                    </p>
+<div class="space-y-6">
+<!-- Control Item -->
+<div class="space-y-3 group">
+<div class="flex justify-between items-end">
+<label class="font-label-sm text-label-sm text-on-surface group-hover:text-tertiary transition-colors">Air Temperature</label>
+<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded font-label-md text-label-md">25 °C</span>
+</div>
+<input class="w-full" max="50" min="-10" type="range" value="25"/>
+<div class="flex justify-between text-[10px] text-on-surface-variant/40">
+<span>-10°C</span>
+<span>50°C</span>
+</div>
+</div>
+<div class="space-y-3 group">
+<div class="flex justify-between items-end">
+<label class="font-label-sm text-label-sm text-on-surface group-hover:text-tertiary transition-colors">Relative Humidity</label>
+<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded font-label-md text-label-md">76 %</span>
+</div>
+<input class="w-full" max="100" min="0" type="range" value="76"/>
+<div class="flex justify-between text-[10px] text-on-surface-variant/40">
+<span>0%</span>
+<span>100%</span>
+</div>
+</div>
+<div class="space-y-3 group">
+<div class="flex justify-between items-end">
+<label class="font-label-sm text-label-sm text-on-surface group-hover:text-tertiary transition-colors">Atmospheric Pressure</label>
+<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded font-label-md text-label-md">1008 hPa</span>
+</div>
+<input class="w-full" max="1050" min="950" type="range" value="1008"/>
+<div class="flex justify-between text-[10px] text-on-surface-variant/40">
+<span>950 hPa</span>
+<span>1050 hPa</span>
+</div>
+</div>
+<div class="space-y-3 group">
+<div class="flex justify-between items-end">
+<label class="font-label-sm text-label-sm text-on-surface group-hover:text-tertiary transition-colors">Wind Velocity</label>
+<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded font-label-md text-label-md">12 km/h</span>
+</div>
+<input class="w-full" max="120" min="0" type="range" value="12"/>
+</div>
+<div class="space-y-3 group">
+<div class="flex justify-between items-end">
+<label class="font-label-sm text-label-sm text-on-surface group-hover:text-tertiary transition-colors">Cloud Coverage</label>
+<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded font-label-md text-label-md">44 %</span>
+</div>
+<input class="w-full" max="100" min="0" type="range" value="44"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Center Panel: Inference -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-gutter">
+<div class="glass p-8 rounded-2xl flex flex-col items-center justify-center flex-1 relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-surface-container-highest/10"></div>
+<h3 class="absolute top-6 left-6 font-label-md text-label-md text-on-surface flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Inference Score Output
+                    </h3>
+<!-- Gauge -->
+<div class="relative w-64 h-64 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<!-- Background Track -->
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.05)" stroke-linecap="round" stroke-width="6"></circle>
+<!-- Progress Track -->
+<circle class="gauge-ring" cx="50" cy="50" fill="none" r="45" stroke="#FFB300" stroke-linecap="round" stroke-width="8" style="stroke-dasharray: 283; stroke-dashoffset: 144;"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="text-[56px] font-bold leading-none text-on-surface">49<span class="text-headline-md font-normal opacity-50">%</span></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-[0.2em] mt-2">Rain Probability</span>
+<div class="mt-4 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-[10px] text-amber-500 font-bold uppercase tracking-wider">Moderate Rain</div>
+</div>
+</div>
+<div class="mt-12 w-full max-w-md text-center space-y-4">
+<div class="flex justify-between items-center px-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant/70">Model Confidence</span>
+<span class="text-label-sm font-label-sm text-tertiary">95%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest/50 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-tertiary/20 via-tertiary to-tertiary shadow-[0_0_10px_rgba(60,221,199,0.5)]" style="width: 95%"></div>
+</div>
+<p class="text-[11px] text-on-surface-variant/40 font-label-sm italic">Classification: Moderate Showers expected in the next 3h.</p>
+</div>
+</div>
+<!-- Advisory Box -->
+<div class="glass p-6 rounded-2xl border-l-4 border-l-tertiary">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center flex-shrink-0 text-tertiary">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-2">Meteorologist Advisory &amp; Logic Explanation</h4>
+<p class="text-body-md text-on-surface-variant/80 leading-relaxed">
+                                Significant convective activity. Falling barometric pressure (1008 hPa) and elevated moisture levels (humidity 76%) are creating favorable updrafts for precipitation. Expect intermittent moderate rainfall. Outdoor work should be planned with caution.
+                            </p>
+<div class="flex gap-4 mt-3">
+<span class="text-[11px] font-label-sm text-on-surface-variant/40 uppercase">Pressure State: <span class="text-error font-bold">Low (Depression)</span></span>
+<span class="text-[11px] font-label-sm text-on-surface-variant/40 uppercase">Dew Point: <span class="text-tertiary font-bold">14°C</span></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Panel: SHAP -->
+<div class="col-span-12 lg:col-span-4">
+<div class="glass p-6 rounded-2xl h-full flex flex-col">
+<div class="flex items-center gap-3 mb-6">
+<span class="w-3 h-3 bg-purple-500 rounded-sm"></span>
+<h3 class="font-headline-md text-[18px] text-on-surface">SHAP Feature Impact Attribution</h3>
+</div>
+<p class="text-on-surface-variant/60 text-label-sm font-label-sm mb-8">
+                        Shows how each metric pushes the prediction away from the <span class="text-on-surface font-bold">25% baseline</span>.
+                    </p>
+<div class="flex-1 flex flex-col gap-6">
+<!-- SHAP BAR ITEM -->
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Relative Humidity</span>
+<span class="text-error">+22.4%</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex shimmer">
+<div class="h-full bg-error ml-auto shadow-[0_0_8px_rgba(255,180,171,0.4)]" style="width: 45%"></div>
+<div class="w-px h-full bg-white/30 z-10"></div>
+<div class="h-full bg-transparent" style="width: 55%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Atmospheric Pressure</span>
+<span class="text-error">+14.2%</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex shimmer">
+<div class="h-full bg-error ml-auto" style="width: 25%"></div>
+<div class="w-px h-full bg-white/30 z-10"></div>
+<div class="h-full bg-transparent" style="width: 75%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Dew Point Saturation</span>
+<span class="text-tertiary">-18.5%</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex shimmer">
+<div class="h-full bg-transparent" style="width: 40%"></div>
+<div class="w-px h-full bg-white/30 z-10"></div>
+<div class="h-full bg-tertiary shadow-[0_0_8px_rgba(60,221,199,0.4)]" style="width: 30%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Cloud Coverage</span>
+<span class="text-error">+8.1%</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex shimmer">
+<div class="h-full bg-error ml-auto" style="width: 15%"></div>
+<div class="w-px h-full bg-white/30 z-10"></div>
+<div class="h-full bg-transparent" style="width: 85%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Sunshine Duration</span>
+<span class="text-error">+4.2%</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex shimmer">
+<div class="h-full bg-error ml-auto" style="width: 8%"></div>
+<div class="w-px h-full bg-white/30 z-10"></div>
+<div class="h-full bg-transparent" style="width: 92%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Wind Dynamics</span>
+<span class="text-error">+10.8%</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex shimmer">
+<div class="h-full bg-error ml-auto" style="width: 18%"></div>
+<div class="w-px h-full bg-white/30 z-10"></div>
+<div class="h-full bg-transparent" style="width: 82%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Evapotranspiration</span>
+<span class="text-error">+19.7%</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex shimmer">
+<div class="h-full bg-error ml-auto" style="width: 38%"></div>
+<div class="w-px h-full bg-white/30 z-10"></div>
+<div class="h-full bg-transparent" style="width: 62%"></div>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6 flex justify-between items-center border-t border-white/5">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-[10px] text-on-surface-variant/60 font-label-sm uppercase tracking-wider">Increases Probability</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-[10px] text-on-surface-variant/60 font-label-sm uppercase tracking-wider">Inhibits Precipitation</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 left-64 h-12 flex items-center justify-between px-gutter bg-surface-dim/80 backdrop-blur-lg border-t border-white/5 z-30">
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">© 2024 Meteorological AI Division. RainPredict Explainer System.</span>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" href="#">Documentation</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" href="#">Model Ethics</a>
+</div>
+</footer>
+<script>
+        // Rain Particle Effect
+        const canvas = document.getElementById('rain');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        const particles = [];
+        const particleCount = 60;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height - height;
+                this.length = Math.random() * 20 + 10;
+                this.speed = Math.random() * 5 + 3;
+                this.opacity = Math.random() * 0.2;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + 1, this.y + this.length);
+                ctx.strokeStyle = `rgba(190, 198, 224, ${this.opacity})`;
+                ctx.stroke();
+            }
+
+            update() {
+                this.y += this.speed;
+                if (this.y > height) {
+                    this.init();
+                }
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Simple Slider Sync Simulation
+        const sliders = document.querySelectorAll('input[type=range]');
+        sliders.forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const valueDisplay = e.target.parentElement.querySelector('.bg-tertiary\\/10');
+                if (valueDisplay) {
+                    const unit = valueDisplay.innerText.split(' ')[1];
+                    valueDisplay.innerText = `${e.target.value} ${unit || ''}`;
+                }
+                
+                // Pulsate the main gauge slightly on change to simulate re-inference
+                const ring = document.querySelector('.gauge-ring');
+                ring.style.opacity = '0.5';
+                setTimeout(() => ring.style.opacity = '1', 100);
+            });
+        });
+    </script>
+</body></html>
