@@ -147,4 +147,4 @@ The returned object includes:
 
 ## Author
 
-Created by **Sudeep**.
+Created by Sudeep.
