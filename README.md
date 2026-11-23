@@ -71,7 +71,7 @@ Rain_pred/
 ├── tailwind.config.js
 ├── eslint.config.js
 └── README.md
-text```
+```
 
 Getting Started
 Prerequisites
