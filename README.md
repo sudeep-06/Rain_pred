@@ -73,33 +73,50 @@ Rain_pred/
 └── README.md
 ```
 
-Getting Started
-Prerequisites
-Node.js
-npm
-Installation
-bash
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js
+- npm
+
+### Installation
+
+```bash
 git clone https://github.com/sudeep-06/Rain_pred.git
 cd Rain_pred
 npm install
-Run Locally
-bash
+```
+
+### Run Locally
+
+```bash
 npm run dev
+```
+
 Open the local URL printed by Vite in your browser.
 
-Build for Production
-bash
+### Build for Production
+
+```bash
 npm run build
-Available Scripts
-bash
+```
+
+## Available Scripts
+
+```bash
 npm run dev
 npm run build
 npm run preview
 npm run lint
-Prediction API
-The predictor is implemented in src/predictor.js:
+```
 
-JavaScript
+## Prediction API
+
+The predictor is implemented in `src/predictor.js`:
+
+```javascript
 predictRain({
   temperature: 28,
   humidity: 72,
@@ -110,19 +127,24 @@ predictRain({
   sunshine: 3,
   evaporation: 5
 })
+```
+
 The returned object includes:
 
-probability
-prediction
-confidence
-shapValues
-recommendation
-baseline
-metadata
-Limitations
-The prediction engine is rule-based rather than a trained production weather model.
-It does not use live weather station or forecast data.
-Its calculations should not be used for safety-critical decisions.
-Author
-Created by Sudeep.
+- `probability`
+- `prediction`
+- `confidence`
+- `shapValues`
+- `recommendation`
+- `baseline`
+- `metadata`
 
+## Limitations
+
+- The prediction engine is rule-based rather than a trained production weather model.
+- It does not use live weather station or forecast data.
+- Its calculations should not be used for safety-critical decisions.
+
+## Author
+
+Created by **Sudeep**.
