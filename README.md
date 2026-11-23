@@ -125,3 +125,4 @@ It does not use live weather station or forecast data.
 Its calculations should not be used for safety-critical decisions.
 Author
 Created by Sudeep.
+
